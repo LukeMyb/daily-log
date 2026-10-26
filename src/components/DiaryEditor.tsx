@@ -312,7 +312,14 @@ export default function DiaryEditor({
             <div className="relative" ref={calendarRef}>
               <button
                 type="button"
-                onClick={() => setIsCalendarOpen((prev) => !prev)}
+                onClick={() => {
+                  if (!isCalendarOpen) {
+                    const { year, month } = parseYearMonth(selectedDate);
+                    setViewYear(year);
+                    setViewMonth(month);
+                  }
+                  setIsCalendarOpen((prev) => !prev);
+                }}
                 suppressHydrationWarning
                 className="px-3 py-2 md:py-2.5 bg-[#27272a] hover:bg-zinc-700 rounded-md font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors flex items-center gap-2.5 cursor-pointer"
               >
@@ -550,8 +557,10 @@ export default function DiaryEditor({
                       type="button"
                       onClick={() => {
                         const today = getTodayLocalDate();
+                        const tYM = parseYearMonth(today);
+                        setViewYear(tYM.year);
+                        setViewMonth(tYM.month);
                         onDateChange(today);
-                        setIsCalendarOpen(false);
                       }}
                       className="px-2 py-1 text-blue-400 hover:text-blue-300 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
                     >
