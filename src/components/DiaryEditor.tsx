@@ -235,6 +235,10 @@ export default function DiaryEditor({
   };
 
   const todayStr = getTodayLocalDate();
+  const todayYM = parseYearMonth(todayStr);
+  const isNextMonthDisabled =
+    viewYear > todayYM.year ||
+    (viewYear === todayYM.year && viewMonth >= todayYM.month);
 
   return (
     <>
@@ -333,7 +337,12 @@ export default function DiaryEditor({
                     <button
                       type="button"
                       onClick={handleNextMonth}
-                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                      disabled={isNextMonthDisabled}
+                      className={`p-1.5 rounded-md transition-colors ${
+                        isNextMonthDisabled
+                          ? "text-zinc-700 cursor-not-allowed"
+                          : "text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+                      }`}
                       title="次月"
                     >
                       <svg
@@ -373,22 +382,27 @@ export default function DiaryEditor({
                       ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                       const isSelected = dateStr === selectedDate;
                       const isToday = dateStr === todayStr;
+                      const isFuture = dateStr > todayStr;
                       const hasDiary = recordedDateSet.has(dateStr);
 
                       return (
                         <button
                           key={dateStr}
                           type="button"
+                          disabled={isFuture}
                           onClick={() => {
+                            if (isFuture) return;
                             onDateChange(dateStr);
                             setIsCalendarOpen(false);
                           }}
-                          className={`h-9 rounded-md flex flex-col items-center justify-center transition-colors cursor-pointer ${
-                            isSelected
-                              ? "bg-blue-600/25 ring-1 ring-blue-500 text-white font-semibold"
+                          className={`h-9 rounded-md flex flex-col items-center justify-center transition-colors ${
+                            isFuture
+                              ? "text-zinc-600 cursor-not-allowed opacity-50"
+                              : isSelected
+                              ? "bg-blue-600/25 ring-1 ring-blue-500 text-white font-semibold cursor-pointer"
                               : isToday
-                              ? "bg-zinc-800 text-zinc-100 font-semibold hover:bg-zinc-700"
-                              : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                              ? "bg-zinc-800 text-zinc-100 font-semibold hover:bg-zinc-700 cursor-pointer"
+                              : "text-zinc-300 hover:bg-zinc-800 hover:text-white cursor-pointer"
                           }`}
                         >
                           <span className="text-xs leading-none">{day}</span>
