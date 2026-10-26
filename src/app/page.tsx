@@ -96,8 +96,8 @@ export default function Home() {
         <DiaryEditor
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
-          onSaved={() => fetchDiaries()}
-          onDeleted={() => fetchDiaries()}
+          onSaved={fetchDiaries}
+          onDeleted={fetchDiaries}
           onOpenMobileList={() => setMobilePane("list")}
           recordedDates={recordedDates}
         />

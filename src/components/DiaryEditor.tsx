@@ -46,7 +46,9 @@ export default function DiaryEditor({
   recordedDates = [],
 }: DiaryEditorProps) {
   const [content, setContent] = useState<string>("");
+  const [savedContent, setSavedContent] = useState<string>("");
   const [existsInDb, setExistsInDb] = useState<boolean>(false);
+  const [isNewEntryMode, setIsNewEntryMode] = useState<boolean>(true);
   const [isLoadingDiary, setIsLoadingDiary] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -140,7 +142,9 @@ export default function DiaryEditor({
   useEffect(() => {
     if (!selectedDate) {
       setContent("");
+      setSavedContent("");
       setExistsInDb(false);
+      setIsNewEntryMode(true);
       return;
     }
 
@@ -161,10 +165,14 @@ export default function DiaryEditor({
       .then((data) => {
         if (data && typeof data.content === "string") {
           setContent(data.content);
+          setSavedContent(data.content);
           setExistsInDb(true);
+          setIsNewEntryMode(false);
         } else {
           setContent("");
+          setSavedContent("");
           setExistsInDb(false);
+          setIsNewEntryMode(true);
         }
       })
       .catch((error) => {
@@ -186,6 +194,56 @@ export default function DiaryEditor({
     };
   }, [selectedDate]);
 
+  // 新規作成モード時のオートセーブ（入力が600ms止まったら自動保存）
+  useEffect(() => {
+    if (
+      !isNewEntryMode ||
+      isLoadingDiary ||
+      !selectedDate ||
+      !content.trim() ||
+      content === savedContent
+    ) {
+      return;
+    }
+
+    let isCancelled = false;
+    const timer = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        const response = await fetch("/api/diaries", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ date: selectedDate, content }),
+        });
+
+        if (!response.ok) {
+          throw new Error("自動保存に失敗しました");
+        }
+
+        if (!isCancelled) {
+          setSavedContent(content);
+          setExistsInDb(true);
+          setStatusMessage({ type: "success", text: "自動保存しました" });
+        }
+        await onSaved();
+      } catch (error) {
+        if (!isCancelled) {
+          console.error(error);
+          setStatusMessage({ type: "error", text: "自動保存に失敗しました" });
+        }
+      } finally {
+        setIsSaving(false);
+      }
+    }, 600);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isNewEntryMode, isLoadingDiary, selectedDate, content, savedContent, onSaved]);
+
   const handleSave = async () => {
     if (!selectedDate || !content.trim()) return;
 
@@ -205,6 +263,7 @@ export default function DiaryEditor({
         throw new Error("保存に失敗しました");
       }
 
+      setSavedContent(content);
       setExistsInDb(true);
       await onSaved();
       setStatusMessage({ type: "success", text: "保存しました" });
@@ -235,7 +294,9 @@ export default function DiaryEditor({
       }
 
       setContent("");
+      setSavedContent("");
       setExistsInDb(false);
+      setIsNewEntryMode(true);
       setIsDeleteDialogOpen(false);
       await onDeleted();
       setStatusMessage({ type: "success", text: "削除しました" });
@@ -250,6 +311,8 @@ export default function DiaryEditor({
 
   const todayStr = getTodayLocalDate();
   const isContentEmpty = content.trim().length === 0;
+  const hasUnsavedEdit =
+    !isNewEntryMode && !isLoadingDiary && content !== savedContent;
   const todayYM = parseYearMonth(todayStr);
   const isNextMonthDisabled =
     viewYear > todayYM.year ||
@@ -579,16 +642,22 @@ export default function DiaryEditor({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {statusMessage && (
-              <span
-                className={`text-xs sm:text-sm mr-1 ${
-                  statusMessage.type === "success"
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {statusMessage.text}
+            {hasUnsavedEdit ? (
+              <span className="text-xs sm:text-sm mr-1 text-red-400">
+                未保存
               </span>
+            ) : (
+              statusMessage && (
+                <span
+                  className={`text-xs sm:text-sm mr-1 ${
+                    statusMessage.type === "success"
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {statusMessage.text}
+                </span>
+              )
             )}
 
             {/* 保存ボタン */}
