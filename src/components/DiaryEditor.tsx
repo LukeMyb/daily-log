@@ -338,8 +338,28 @@ export default function DiaryEditor({
   return (
     <>
       <section className="flex-1 flex flex-col h-full bg-zinc-900 min-w-0">
-        {/* 上部ツールバー：一覧切替ボタン(スマホのみ)・日付選択・保存ボタン・削除ボタン */}
-        <div className="flex items-center justify-between gap-2 px-3 py-2.5 md:px-6 md:py-3 border-b border-zinc-800 bg-zinc-900">
+        {/* 上部ツールバー：スマホ時は上段にステータスメッセージ用固定スペース＋下段にボタン群、PC時は従来通り1行 */}
+        <div className="flex flex-col gap-1.5 md:gap-0 px-3 py-2 md:px-6 md:py-3 border-b border-zinc-800 bg-zinc-900">
+          {/* スマホ表示時のみ：上部に高さを固定確保したステータスメッセージ領域 */}
+          <div className="md:hidden h-4 flex items-center justify-end px-0.5">
+            {hasUnsavedEdit ? (
+              <span className="text-xs leading-none text-red-400">未保存</span>
+            ) : (
+              statusMessage && (
+                <span
+                  className={`text-xs leading-none ${
+                    statusMessage.type === "success"
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {statusMessage.text}
+                </span>
+              )
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             {/* スマホ表示時のみ：一覧画面へ切り替えるメニューボタン */}
             {onOpenMobileList && (
@@ -372,7 +392,7 @@ export default function DiaryEditor({
             </span>
 
             {/* カスタムカレンダー付き日付選択 */}
-            <div className="relative" ref={calendarRef}>
+            <div className="relative shrink-0" ref={calendarRef}>
               <button
                 type="button"
                 onClick={() => {
@@ -384,7 +404,7 @@ export default function DiaryEditor({
                   setIsCalendarOpen((prev) => !prev);
                 }}
                 suppressHydrationWarning
-                className="px-3 py-2 md:py-2.5 bg-[#27272a] hover:bg-zinc-700 rounded-md font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors flex items-center gap-2.5 cursor-pointer"
+                className="px-3 py-2 md:py-2.5 bg-[#27272a] hover:bg-zinc-700 rounded-md font-mono text-sm text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors flex items-center gap-2.5 cursor-pointer"
               >
                 <span suppressHydrationWarning>{selectedDate}</span>
                 <svg
@@ -642,14 +662,15 @@ export default function DiaryEditor({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* PC表示時のみ：ボタン横にステータスメッセージを表示 */}
             {hasUnsavedEdit ? (
-              <span className="text-xs sm:text-sm mr-1 text-red-400">
+              <span className="hidden md:inline text-sm mr-1 text-red-400">
                 未保存
               </span>
             ) : (
               statusMessage && (
                 <span
-                  className={`text-xs sm:text-sm mr-1 ${
+                  className={`hidden md:inline text-sm mr-1 ${
                     statusMessage.type === "success"
                       ? "text-green-400"
                       : "text-red-400"
@@ -665,7 +686,7 @@ export default function DiaryEditor({
               type="button"
               onClick={handleSave}
               disabled={isSaving || isDeleting || !selectedDate || isContentEmpty}
-              className={`px-3.5 py-2 md:px-4 md:py-2.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center shrink-0 ${
+              className={`px-3.5 py-2 md:px-4 md:py-2.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors flex items-center justify-center shrink-0 ${
                 isSaving || isDeleting || !selectedDate || isContentEmpty
                   ? "bg-[#27272a] text-zinc-600 cursor-not-allowed"
                   : "bg-[#27272a] hover:bg-zinc-700 text-zinc-200 hover:text-white cursor-pointer"
@@ -704,6 +725,7 @@ export default function DiaryEditor({
                 <line x1="14" x2="14" y1="11" y2="17" />
               </svg>
             </button>
+          </div>
           </div>
         </div>
 
