@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
-const allowedHost = process.env.HOST || "100.88.57.78";
-
 const nextConfig: NextConfig = {
-  allowedDevOrigins: [allowedHost],
+  allowedDevOrigins: process.env.HOST ? [process.env.HOST] : [],
   turbopack: {
     rules: {
       "*.css": {
