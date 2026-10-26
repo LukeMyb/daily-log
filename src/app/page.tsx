@@ -1,18 +1,41 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DiaryList, { type DiaryItem } from "@/components/DiaryList";
 import DiaryEditor, { getTodayLocalDate } from "@/components/DiaryEditor";
 
 export default function Home() {
   const [diaries, setDiaries] = useState<DiaryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectedDate, setSelectedDate] = useState<string>(() =>
-    getTodayLocalDate()
-  );
+  // ビルド時の静的HTMLに前日の日付が焼き込まれるのを防ぐため初期値は空にし、マウント時に今日の日付をセットする
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   // スマホ表示時（md未満）のペイン切り替え状態（"editor" | "list"）
   const [mobilePane, setMobilePane] = useState<"editor" | "list">("editor");
+  const lastTodayRef = useRef<string>("");
+
+  // クライアントマウント時および日付変更後（バックグラウンド復帰時）に今日の日付を反映
+  useEffect(() => {
+    const today = getTodayLocalDate();
+    lastTodayRef.current = today;
+    setSelectedDate(today);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "hidden") return;
+      const currentToday = getTodayLocalDate();
+      if (lastTodayRef.current && currentToday !== lastTodayRef.current) {
+        lastTodayRef.current = currentToday;
+        setSelectedDate(currentToday);
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    return () => {
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+    };
+  }, []);
 
   // PWA用サービスワーカーの登録
   useEffect(() => {

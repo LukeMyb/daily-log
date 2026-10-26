@@ -60,10 +60,23 @@ export default function DiaryEditor({
 
   // カスタムカレンダーポップオーバー用のState
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+  const [todayStr, setTodayStr] = useState<string>("");
   const initialYM = parseYearMonth(selectedDate);
   const [viewYear, setViewYear] = useState<number>(initialYM.year);
   const [viewMonth, setViewMonth] = useState<number>(initialYM.month);
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  // マウント時および画面復帰時にローカルの「今日の日付」を最新状態に更新
+  useEffect(() => {
+    const updateToday = () => setTodayStr(getTodayLocalDate());
+    updateToday();
+    window.addEventListener("focus", updateToday);
+    document.addEventListener("visibilitychange", updateToday);
+    return () => {
+      window.removeEventListener("focus", updateToday);
+      document.removeEventListener("visibilitychange", updateToday);
+    };
+  }, []);
 
   const recordedDateSet = useMemo(
     () => new Set(recordedDates),
@@ -309,11 +322,11 @@ export default function DiaryEditor({
     }
   };
 
-  const todayStr = getTodayLocalDate();
+  const activeTodayStr = todayStr || selectedDate;
   const isContentEmpty = content.trim().length === 0;
   const hasUnsavedEdit =
     !isNewEntryMode && !isLoadingDiary && content !== savedContent;
-  const todayYM = parseYearMonth(todayStr);
+  const todayYM = parseYearMonth(activeTodayStr);
   const isNextMonthDisabled =
     viewYear > todayYM.year ||
     (viewYear === todayYM.year && viewMonth >= todayYM.month);
@@ -397,16 +410,19 @@ export default function DiaryEditor({
                 type="button"
                 onClick={() => {
                   if (!isCalendarOpen) {
-                    const { year, month } = parseYearMonth(selectedDate);
+                    const currentToday = getTodayLocalDate();
+                    setTodayStr(currentToday);
+                    const { year, month } = parseYearMonth(
+                      selectedDate || currentToday
+                    );
                     setViewYear(year);
                     setViewMonth(month);
                   }
                   setIsCalendarOpen((prev) => !prev);
                 }}
-                suppressHydrationWarning
                 className="px-3 py-2 md:py-2.5 bg-[#27272a] hover:bg-zinc-700 rounded-md font-mono text-sm text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors flex items-center gap-2.5 cursor-pointer"
               >
-                <span suppressHydrationWarning>{selectedDate}</span>
+                <span>{selectedDate || "----/--/--"}</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="15"
@@ -594,8 +610,10 @@ export default function DiaryEditor({
                         viewMonth + 1
                       ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                       const isSelected = dateStr === selectedDate;
-                      const isToday = dateStr === todayStr;
-                      const isFuture = dateStr > todayStr;
+                      const isToday = dateStr === activeTodayStr;
+                      const isFuture = Boolean(
+                        activeTodayStr && dateStr > activeTodayStr
+                      );
                       const hasDiary = recordedDateSet.has(dateStr);
 
                       return (
