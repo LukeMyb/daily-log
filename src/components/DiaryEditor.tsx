@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type DiaryEditorProps = {
   selectedDate: string;
@@ -8,7 +8,10 @@ type DiaryEditorProps = {
   onSaved: () => Promise<void> | void;
   onDeleted: () => Promise<void> | void;
   onOpenMobileList?: () => void;
+  recordedDates?: string[];
 };
+
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
 /**
  * ローカルタイムゾーン基準で今日の日付を YYYY-MM-DD 形式で取得する
@@ -21,12 +24,26 @@ export function getTodayLocalDate(): string {
   return `${year}-${month}-${day}`;
 }
 
+function parseYearMonth(dateStr: string): { year: number; month: number } {
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    if (!Number.isNaN(y) && !Number.isNaN(m) && m >= 0 && m <= 11) {
+      return { year: y, month: m };
+    }
+  }
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
 export default function DiaryEditor({
   selectedDate,
   onDateChange,
   onSaved,
   onDeleted,
   onOpenMobileList,
+  recordedDates = [],
 }: DiaryEditorProps) {
   const [content, setContent] = useState<string>("");
   const [existsInDb, setExistsInDb] = useState<boolean>(false);
@@ -38,6 +55,72 @@ export default function DiaryEditor({
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // カスタムカレンダーポップオーバー用のState
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+  const initialYM = parseYearMonth(selectedDate);
+  const [viewYear, setViewYear] = useState<number>(initialYM.year);
+  const [viewMonth, setViewMonth] = useState<number>(initialYM.month);
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  const recordedDateSet = useMemo(
+    () => new Set(recordedDates),
+    [recordedDates]
+  );
+
+  // 選択中の日付が外部（一覧クリック等）から変わった際、カレンダーの表示年月も追従させる
+  useEffect(() => {
+    const { year, month } = parseYearMonth(selectedDate);
+    setViewYear(year);
+    setViewMonth(month);
+  }, [selectedDate]);
+
+  // カレンダー枠外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(e.target as Node)
+      ) {
+        setIsCalendarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // カレンダーのセル生成
+  const calendarDays = useMemo(() => {
+    const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const cells: (number | null)[] = [];
+
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      cells.push(null);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push(d);
+    }
+    return cells;
+  }, [viewYear, viewMonth]);
+
+  const handlePrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewYear((y) => y - 1);
+      setViewMonth(11);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewYear((y) => y + 1);
+      setViewMonth(0);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
 
   // 日付が変更されたら該当日の日記データを自動読み込みする
   useEffect(() => {
@@ -151,6 +234,8 @@ export default function DiaryEditor({
     }
   };
 
+  const todayStr = getTodayLocalDate();
+
   return (
     <>
       <section className="flex-1 flex flex-col h-full bg-zinc-900 min-w-0">
@@ -183,22 +268,163 @@ export default function DiaryEditor({
               </button>
             )}
 
-            <label
-              htmlFor="diary-date"
-              className="hidden sm:inline text-sm font-medium text-zinc-400 shrink-0"
-            >
+            <span className="hidden sm:inline text-sm font-medium text-zinc-400 shrink-0">
               日付
-            </label>
-            <input
-              id="diary-date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                onDateChange(e.target.value);
-              }}
-              suppressHydrationWarning
-              className="p-2 md:p-2.5 bg-[#27272a] rounded-md font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors [color-scheme:dark] min-w-0"
-            />
+            </span>
+
+            {/* カスタムカレンダー付き日付選択 */}
+            <div className="relative" ref={calendarRef}>
+              <button
+                type="button"
+                onClick={() => setIsCalendarOpen((prev) => !prev)}
+                suppressHydrationWarning
+                className="px-3 py-2 md:py-2.5 bg-[#27272a] hover:bg-zinc-700 rounded-md font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors flex items-center gap-2.5 cursor-pointer"
+              >
+                <span suppressHydrationWarning>{selectedDate}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-zinc-400"
+                >
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                  <line x1="16" x2="16" y1="2" y2="6" />
+                  <line x1="8" x2="8" y1="2" y2="6" />
+                  <line x1="3" x2="21" y1="10" y2="10" />
+                </svg>
+              </button>
+
+              {/* カレンダーポップオーバー */}
+              {isCalendarOpen && (
+                <div className="absolute top-full left-0 mt-1.5 w-72 p-4 bg-[#1E1E1E] border border-white/15 rounded-xl shadow-2xl z-50 select-none">
+                  {/* 年月ヘッダーと月移動ボタン */}
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      type="button"
+                      onClick={handlePrevMonth}
+                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                      title="前月"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m15 18-6-6 6-6" />
+                      </svg>
+                    </button>
+
+                    <span className="text-sm font-medium text-white">
+                      {viewYear}年 {viewMonth + 1}月
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={handleNextMonth}
+                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                      title="次月"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* 曜日行 */}
+                  <div className="grid grid-cols-7 text-center text-xs text-zinc-500 mb-1">
+                    {WEEKDAYS.map((dayName) => (
+                      <span key={dayName} className="py-1">
+                        {dayName}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* 日付グリッド */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {calendarDays.map((day, idx) => {
+                      if (day === null) {
+                        return <div key={`empty-${idx}`} className="h-9" />;
+                      }
+
+                      const dateStr = `${viewYear}-${String(
+                        viewMonth + 1
+                      ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      const isSelected = dateStr === selectedDate;
+                      const isToday = dateStr === todayStr;
+                      const hasDiary = recordedDateSet.has(dateStr);
+
+                      return (
+                        <button
+                          key={dateStr}
+                          type="button"
+                          onClick={() => {
+                            onDateChange(dateStr);
+                            setIsCalendarOpen(false);
+                          }}
+                          className={`h-9 rounded-md flex flex-col items-center justify-center transition-colors cursor-pointer ${
+                            isSelected
+                              ? "bg-blue-600/25 ring-1 ring-blue-500 text-white font-semibold"
+                              : isToday
+                              ? "bg-zinc-800 text-zinc-100 font-semibold hover:bg-zinc-700"
+                              : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                          }`}
+                        >
+                          <span className="text-xs leading-none">{day}</span>
+                          {/* 記録がある日付の下に青い点を表示 */}
+                          <span
+                            className={`mt-1 h-1.5 w-1.5 rounded-full ${
+                              hasDiary ? "bg-blue-500" : "bg-transparent"
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* フッター：凡例と「今日」ボタン */}
+                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/10 text-xs">
+                    <div className="flex items-center gap-1.5 text-zinc-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 inline-block" />
+                      <span>日記あり</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = getTodayLocalDate();
+                        onDateChange(today);
+                        setIsCalendarOpen(false);
+                      }}
+                      className="px-2 py-1 text-blue-400 hover:text-blue-300 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                    >
+                      今日へ移動
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {isLoadingDiary && (
               <span className="hidden sm:inline text-xs text-zinc-500 shrink-0">
                 読み込み中...

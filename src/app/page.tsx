@@ -25,14 +25,9 @@ export default function Home() {
     }
   }, []);
 
-  const fetchDiaries = useCallback(async (query?: string) => {
+  const fetchDiaries = useCallback(async () => {
     try {
-      const q = query?.trim() ?? "";
-      const url = q
-        ? `/api/diaries?q=${encodeURIComponent(q)}`
-        : "/api/diaries";
-
-      const response = await fetch(url, {
+      const response = await fetch("/api/diaries", {
         cache: "no-store",
       });
       if (!response.ok) {
@@ -62,6 +57,12 @@ export default function Home() {
     );
   }, [diaries, searchQuery]);
 
+  // 記録が存在するすべての日付一覧（カレンダーの青いドット表示用）
+  const recordedDates = useMemo(
+    () => diaries.map((diary) => diary.date),
+    [diaries]
+  );
+
   // 一覧から日付を選択した際、スマホ画面では自動的にエディタ表示へ切り替える
   const handleSelectDate = (date: string) => {
     setSelectedDate(date);
@@ -82,7 +83,7 @@ export default function Home() {
           onSelectDate={handleSelectDate}
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
-          onSearchSubmit={() => fetchDiaries(searchQuery)}
+          onSearchSubmit={() => fetchDiaries()}
           onCloseMobileList={() => setMobilePane("editor")}
         />
       </div>
@@ -98,6 +99,7 @@ export default function Home() {
           onSaved={() => fetchDiaries()}
           onDeleted={() => fetchDiaries()}
           onOpenMobileList={() => setMobilePane("list")}
+          recordedDates={recordedDates}
         />
       </div>
     </main>
