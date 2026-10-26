@@ -88,7 +88,6 @@ npm run start
 ```text
 .
 ├── README.md                             # 本ドキュメント
-├── SPEC.md                               # 全体設計書・実装ロードマップ
 ├── start_daily-log.vbs                   # Windows バックグラウンド起動用スクリプト
 ├── public/
 │   └── sw.js                             # PWA用 Service Worker
