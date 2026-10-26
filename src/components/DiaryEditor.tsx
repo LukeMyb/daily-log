@@ -173,7 +173,7 @@ export default function DiaryEditor({
   }, [selectedDate]);
 
   const handleSave = async () => {
-    if (!selectedDate) return;
+    if (!selectedDate || !content.trim()) return;
 
     setIsSaving(true);
     setStatusMessage(null);
@@ -235,6 +235,7 @@ export default function DiaryEditor({
   };
 
   const todayStr = getTodayLocalDate();
+  const isContentEmpty = content.trim().length === 0;
   const todayYM = parseYearMonth(todayStr);
   const isNextMonthDisabled =
     viewYear > todayYM.year ||
@@ -463,9 +464,9 @@ export default function DiaryEditor({
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving || isDeleting || !selectedDate}
+              disabled={isSaving || isDeleting || !selectedDate || isContentEmpty}
               className={`px-3.5 py-2 md:px-4 md:py-2.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center shrink-0 ${
-                isSaving || isDeleting || !selectedDate
+                isSaving || isDeleting || !selectedDate || isContentEmpty
                   ? "bg-[#27272a] text-zinc-600 cursor-not-allowed"
                   : "bg-[#27272a] hover:bg-zinc-700 text-zinc-200 hover:text-white cursor-pointer"
               }`}

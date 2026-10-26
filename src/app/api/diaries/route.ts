@@ -40,9 +40,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (typeof content !== "string") {
+    if (typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
-        { error: "contentは文字列で指定してください。" },
+        { error: "本文（content）を入力してください。" },
         { status: 400 }
       );
     }
