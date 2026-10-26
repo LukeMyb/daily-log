@@ -104,6 +104,20 @@ export default function DiaryEditor({
     return cells;
   }, [viewYear, viewMonth]);
 
+  const handlePrevYear = () => {
+    setViewYear((y) => y - 1);
+  };
+
+  const handleNextYear = () => {
+    const tYM = parseYearMonth(getTodayLocalDate());
+    if (viewYear >= tYM.year) return;
+    const nextY = viewYear + 1;
+    setViewYear(nextY);
+    if (nextY === tYM.year && viewMonth > tYM.month) {
+      setViewMonth(tYM.month);
+    }
+  };
+
   const handlePrevMonth = () => {
     if (viewMonth === 0) {
       setViewYear((y) => y - 1);
@@ -240,6 +254,23 @@ export default function DiaryEditor({
   const isNextMonthDisabled =
     viewYear > todayYM.year ||
     (viewYear === todayYM.year && viewMonth >= todayYM.month);
+  const isNextYearDisabled = viewYear >= todayYM.year;
+
+  // 年セレクトボックス用の選択肢（最古の日記の年 または 10年前 〜 今年）
+  const yearOptions = useMemo(() => {
+    let minYear = Math.min(todayYM.year - 10, viewYear);
+    for (const d of recordedDates) {
+      const y = parseInt(d.slice(0, 4), 10);
+      if (!Number.isNaN(y) && y < minYear) {
+        minYear = y;
+      }
+    }
+    const years: number[] = [];
+    for (let y = todayYM.year; y >= minYear; y--) {
+      years.push(y);
+    }
+    return years;
+  }, [todayYM.year, viewYear, recordedDates]);
 
   return (
     <>
@@ -308,58 +339,149 @@ export default function DiaryEditor({
               {/* カレンダーポップオーバー */}
               {isCalendarOpen && (
                 <div className="absolute top-full left-0 mt-1.5 w-72 p-4 bg-[#1E1E1E] border border-white/15 rounded-xl shadow-2xl z-50 select-none">
-                  {/* 年月ヘッダーと月移動ボタン */}
-                  <div className="flex items-center justify-between mb-3">
-                    <button
-                      type="button"
-                      onClick={handlePrevMonth}
-                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
-                      title="前月"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                  {/* 年月ヘッダーと年・月移動ボタン */}
+                  <div className="flex items-center justify-between gap-1 mb-3">
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={handlePrevYear}
+                        className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                        title="前年"
                       >
-                        <path d="m15 18-6-6 6-6" />
-                      </svg>
-                    </button>
-
-                    <span className="text-sm font-medium text-white">
-                      {viewYear}年 {viewMonth + 1}月
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={handleNextMonth}
-                      disabled={isNextMonthDisabled}
-                      className={`p-1.5 rounded-md transition-colors ${
-                        isNextMonthDisabled
-                          ? "text-zinc-700 cursor-not-allowed"
-                          : "text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
-                      }`}
-                      title="次月"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m11 17-5-5 5-5" />
+                          <path d="m18 17-5-5 5-5" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePrevMonth}
+                        className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                        title="前月"
                       >
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m15 18-6-6 6-6" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* 年・月ドロップダウン選択 */}
+                    <div className="flex items-center gap-1">
+                      <select
+                        value={viewYear}
+                        onChange={(e) => {
+                          const newYear = parseInt(e.target.value, 10);
+                          setViewYear(newYear);
+                          if (
+                            newYear === todayYM.year &&
+                            viewMonth > todayYM.month
+                          ) {
+                            setViewMonth(todayYM.month);
+                          }
+                        }}
+                        aria-label="年を選択"
+                        className="bg-[#27272a] hover:bg-zinc-700 text-white text-xs font-medium px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                      >
+                        {yearOptions.map((y) => (
+                          <option key={y} value={y}>
+                            {y}年
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={viewMonth}
+                        onChange={(e) => {
+                          setViewMonth(parseInt(e.target.value, 10));
+                        }}
+                        aria-label="月を選択"
+                        className="bg-[#27272a] hover:bg-zinc-700 text-white text-xs font-medium px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                      >
+                        {Array.from({ length: 12 }, (_, m) => {
+                          const isFutureMonth =
+                            viewYear === todayYM.year && m > todayYM.month;
+                          return (
+                            <option key={m} value={m} disabled={isFutureMonth}>
+                              {m + 1}月
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={handleNextMonth}
+                        disabled={isNextMonthDisabled}
+                        className={`p-1.5 rounded-md transition-colors ${
+                          isNextMonthDisabled
+                            ? "text-zinc-700 cursor-not-allowed"
+                            : "text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+                        }`}
+                        title="次月"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNextYear}
+                        disabled={isNextYearDisabled}
+                        className={`p-1.5 rounded-md transition-colors ${
+                          isNextYearDisabled
+                            ? "text-zinc-700 cursor-not-allowed"
+                            : "text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+                        }`}
+                        title="次年"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m6 17 5-5-5-5" />
+                          <path d="m13 17 5-5-5-5" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* 曜日行 */}
