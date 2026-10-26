@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node -e \"process.loadEnvFile('.env'); process.execArgv=[]; process.argv=[process.argv[0], require.resolve('next/dist/bin/next'), 'dev', '-H', process.env.HOST || '0.0.0.0', '-p', process.env.PORT || '3000']; require('next/dist/bin/next')\"",
     "build": "next build",
-    "start": "next start",
+    "start": "node -e \"process.loadEnvFile('.env'); process.execArgv=[]; process.argv=[process.argv[0], require.resolve('next/dist/bin/next'), 'start', '-H', process.env.HOST || '0.0.0.0', '-p', process.env.PORT || '3000']; require('next/dist/bin/next')\"",
     "lint": "eslint"
   },
   "dependencies": {

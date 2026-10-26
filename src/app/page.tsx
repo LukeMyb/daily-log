@@ -11,6 +11,8 @@ export default function Home() {
     getTodayLocalDate()
   );
   const [searchQuery, setSearchQuery] = useState<string>("");
+  // スマホ表示時（md未満）のペイン切り替え状態（"editor" | "list"）
+  const [mobilePane, setMobilePane] = useState<"editor" | "list">("editor");
 
   const fetchDiaries = useCallback(async (query?: string) => {
     try {
@@ -49,23 +51,44 @@ export default function Home() {
     );
   }, [diaries, searchQuery]);
 
+  // 一覧から日付を選択した際、スマホ画面では自動的にエディタ表示へ切り替える
+  const handleSelectDate = (date: string) => {
+    setSelectedDate(date);
+    setMobilePane("editor");
+  };
+
   return (
-    <main className="flex h-screen w-full overflow-hidden bg-zinc-900 text-zinc-200">
-      <DiaryList
-        diaries={filteredDiaries}
-        isLoading={isLoading}
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        onSearchSubmit={() => fetchDiaries(searchQuery)}
-      />
-      <DiaryEditor
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        onSaved={() => fetchDiaries()}
-        onDeleted={() => fetchDiaries()}
-      />
+    <main className="flex h-dvh w-full overflow-hidden bg-zinc-900 text-zinc-200">
+      <div
+        className={`${
+          mobilePane === "list" ? "flex" : "hidden"
+        } md:flex w-full md:w-auto h-full shrink-0`}
+      >
+        <DiaryList
+          diaries={filteredDiaries}
+          isLoading={isLoading}
+          selectedDate={selectedDate}
+          onSelectDate={handleSelectDate}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onSearchSubmit={() => fetchDiaries(searchQuery)}
+          onCloseMobileList={() => setMobilePane("editor")}
+        />
+      </div>
+
+      <div
+        className={`${
+          mobilePane === "editor" ? "flex" : "hidden"
+        } md:flex flex-1 h-full min-w-0`}
+      >
+        <DiaryEditor
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          onSaved={() => fetchDiaries()}
+          onDeleted={() => fetchDiaries()}
+          onOpenMobileList={() => setMobilePane("list")}
+        />
+      </div>
     </main>
   );
 }

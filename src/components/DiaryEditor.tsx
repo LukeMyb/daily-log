@@ -7,6 +7,7 @@ type DiaryEditorProps = {
   onDateChange: (date: string) => void;
   onSaved: () => Promise<void> | void;
   onDeleted: () => Promise<void> | void;
+  onOpenMobileList?: () => void;
 };
 
 /**
@@ -25,6 +26,7 @@ export default function DiaryEditor({
   onDateChange,
   onSaved,
   onDeleted,
+  onOpenMobileList,
 }: DiaryEditorProps) {
   const [content, setContent] = useState<string>("");
   const [existsInDb, setExistsInDb] = useState<boolean>(false);
@@ -152,12 +154,38 @@ export default function DiaryEditor({
   return (
     <>
       <section className="flex-1 flex flex-col h-full bg-zinc-900 min-w-0">
-        {/* 上部ツールバー：日付選択・保存ボタン・削除ボタン */}
-        <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-zinc-800 bg-zinc-900">
-          <div className="flex items-center gap-3">
+        {/* 上部ツールバー：一覧切替ボタン(スマホのみ)・日付選択・保存ボタン・削除ボタン */}
+        <div className="flex items-center justify-between gap-2 px-3 py-2.5 md:px-6 md:py-3 border-b border-zinc-800 bg-zinc-900">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            {/* スマホ表示時のみ：一覧画面へ切り替えるメニューボタン */}
+            {onOpenMobileList && (
+              <button
+                type="button"
+                onClick={onOpenMobileList}
+                className="md:hidden p-2.5 bg-[#27272a] hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-md transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                title="日記一覧を表示"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="4" x2="20" y1="12" y2="12" />
+                  <line x1="4" x2="20" y1="6" y2="6" />
+                  <line x1="4" x2="20" y1="18" y2="18" />
+                </svg>
+              </button>
+            )}
+
             <label
               htmlFor="diary-date"
-              className="text-sm font-medium text-zinc-400"
+              className="hidden sm:inline text-sm font-medium text-zinc-400 shrink-0"
             >
               日付
             </label>
@@ -169,17 +197,19 @@ export default function DiaryEditor({
                 onDateChange(e.target.value);
               }}
               suppressHydrationWarning
-              className="p-2.5 bg-[#27272a] rounded-md font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors [color-scheme:dark]"
+              className="p-2 md:p-2.5 bg-[#27272a] rounded-md font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors [color-scheme:dark] min-w-0"
             />
             {isLoadingDiary && (
-              <span className="text-xs text-zinc-500">読み込み中...</span>
+              <span className="hidden sm:inline text-xs text-zinc-500 shrink-0">
+                読み込み中...
+              </span>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {statusMessage && (
               <span
-                className={`text-sm mr-2 ${
+                className={`text-xs sm:text-sm mr-1 ${
                   statusMessage.type === "success"
                     ? "text-green-400"
                     : "text-red-400"
@@ -194,7 +224,7 @@ export default function DiaryEditor({
               type="button"
               onClick={handleSave}
               disabled={isSaving || isDeleting || !selectedDate}
-              className={`px-4 py-2.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center shrink-0 ${
+              className={`px-3.5 py-2 md:px-4 md:py-2.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center shrink-0 ${
                 isSaving || isDeleting || !selectedDate
                   ? "bg-[#27272a] text-zinc-600 cursor-not-allowed"
                   : "bg-[#27272a] hover:bg-zinc-700 text-zinc-200 hover:text-white cursor-pointer"
@@ -209,7 +239,7 @@ export default function DiaryEditor({
               onClick={() => setIsDeleteDialogOpen(true)}
               disabled={!existsInDb || isSaving || isDeleting || !selectedDate}
               title="この日の日記を削除"
-              className={`p-2.5 rounded-md transition-colors flex items-center justify-center shrink-0 ${
+              className={`p-2 md:p-2.5 rounded-md transition-colors flex items-center justify-center shrink-0 ${
                 !existsInDb || isSaving || isDeleting || !selectedDate
                   ? "bg-[#27272a] text-zinc-600 cursor-not-allowed"
                   : "bg-[#27272a] hover:bg-zinc-700 text-zinc-400 hover:text-red-400 cursor-pointer"
@@ -237,7 +267,7 @@ export default function DiaryEditor({
         </div>
 
         {/* 下部：本文入力用テキストエリア */}
-        <div className="flex-1 flex flex-col p-6">
+        <div className="flex-1 flex flex-col p-3 md:p-6">
           <textarea
             value={content}
             onChange={(e) => {
@@ -245,7 +275,7 @@ export default function DiaryEditor({
               if (statusMessage) setStatusMessage(null);
             }}
             placeholder="今日の日記を入力..."
-            className="w-full flex-1 resize-none p-4 bg-[#27272a] rounded-md text-base leading-relaxed text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full flex-1 resize-none p-3.5 md:p-4 bg-[#27272a] rounded-md text-base leading-relaxed text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
       </section>

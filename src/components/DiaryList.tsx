@@ -14,6 +14,7 @@ type DiaryListProps = {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   onSearchSubmit?: (e: React.FormEvent) => void;
+  onCloseMobileList?: () => void;
 };
 
 function formatPreview(content: string): string {
@@ -32,10 +33,11 @@ export default function DiaryList({
   searchQuery,
   onSearchQueryChange,
   onSearchSubmit,
+  onCloseMobileList,
 }: DiaryListProps) {
   return (
-    <aside className="w-[340px] shrink-0 border-r border-zinc-800 bg-[#1E1E1E] flex flex-col h-full select-none">
-      {/* 上部：キーワード検索フォーム */}
+    <aside className="w-full md:w-[340px] shrink-0 md:border-r border-zinc-800 bg-[#1E1E1E] flex flex-col h-full select-none">
+      {/* 上部：キーワード検索フォーム（スマホ時はエディタ画面へ戻るボタンも表示） */}
       <div className="p-3 border-b border-zinc-800 bg-zinc-900">
         <form
           onSubmit={(e) => {
@@ -100,6 +102,32 @@ export default function DiaryList({
               <path d="m21 21-4.3-4.3" />
             </svg>
           </button>
+
+          {/* スマホ表示時のみ：編集画面へ切り替えるボタン */}
+          {onCloseMobileList && (
+            <button
+              type="button"
+              onClick={onCloseMobileList}
+              className="md:hidden px-3 py-2.5 bg-[#27272a] hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+              title="編集画面へ"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
+              </svg>
+              <span>編集</span>
+            </button>
+          )}
         </form>
       </div>
 
