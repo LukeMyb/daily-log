@@ -27,6 +27,8 @@
 ```text
 .
 ├── SPEC.md                               # 全体設計書
+├── public/
+│   └── sw.js                             # PWA用Service Worker
 ├── prisma/
 │   └── schema.prisma                     # Prismaスキーマ定義
 └── src/
@@ -41,8 +43,11 @@
         │       ├── route.ts              # 一覧取得・検索(GET) / 新規作成・上書き更新(POST)
         │       └── [date]/
         │           └── route.ts          # 特定日の取得(GET) / 削除(DELETE)
+        ├── manifest.ts                   # PWA Web App Manifest
+        ├── icon.tsx                      # PWA / ブラウザ用アプリアイコン (512x512)
+        ├── apple-icon.tsx                # iOS ホーム画面用アイコン (180x180)
         ├── page.tsx                      # メイン画面（PC: 左右2ペイン / スマホ: 1ペイン切替）
-        ├── layout.tsx                    # ルートレイアウト
+        ├── layout.tsx                    # ルートレイアウト・PWAメタデータ設定
         └── globals.css                   # グローバルスタイル
 ```
 
@@ -61,11 +66,12 @@
   - `src/app/api/diaries/[date]/route.ts`（特定日取得 `GET`・削除 `DELETE`）の作成
   - 日付変更時・一覧クリック時の本文自動読み込み
   - 日記の削除処理（確認ダイアログ付き）とキーワード検索ロジックの実装
-- **【Step 4】スマホ画面（レスポンシブ切り替え）の最適化**（現在・完了）
+- **【Step 4】スマホ画面（レスポンシブ切り替え）の最適化**（完了済み）
   - PC（`md` 以上）では左右2ペイン同時表示、スマホ（`md` 未満）では「編集画面」と「一覧画面」の1ペイン切り替え表示に対応
   - 一覧の行タップ時に自動で編集画面へ遷移するモバイル操作性の最適化
-- **【Step 5】PWA対応と自宅サーバーでの本番稼働設定**
-  - マニフェスト・アイコン等のPWA化とセルフホスト向け本番設定
+- **【Step 5】PWA対応と自宅サーバーでの本番稼働設定**（完了）
+  - Web App Manifest（`src/app/manifest.ts`）、アプリアイコン（`icon.tsx` / `apple-icon.tsx`）、Service Worker（`public/sw.js`）によるPWA化
+  - `.env` の `HOST` / `PORT` による自宅サーバー本番稼働設定（`npm run build` & `npm run start`）およびセキュリティヘッダー設定
 
 ---
 

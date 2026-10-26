@@ -14,6 +14,17 @@ export default function Home() {
   // スマホ表示時（md未満）のペイン切り替え状態（"editor" | "list"）
   const [mobilePane, setMobilePane] = useState<"editor" | "list">("editor");
 
+  // PWA用サービスワーカーの登録
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .catch((err) => {
+          console.error("Service Worker registration failed:", err);
+        });
+    }
+  }, []);
+
   const fetchDiaries = useCallback(async (query?: string) => {
     try {
       const q = query?.trim() ?? "";
