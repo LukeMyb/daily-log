@@ -1,9 +1,19 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+
     const diaries = await prisma.diary.findMany({
+      where: q
+        ? {
+            OR: [
+              { content: { contains: q } },
+              { date: { contains: q } },
+            ],
+          }
+        : undefined,
       orderBy: {
         date: "desc",
       },

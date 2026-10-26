@@ -1,16 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import DiaryList, { type DiaryItem } from "@/components/DiaryList";
-import DiaryEditor from "@/components/DiaryEditor";
+import DiaryEditor, { getTodayLocalDate } from "@/components/DiaryEditor";
 
 export default function Home() {
   const [diaries, setDiaries] = useState<DiaryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedDate, setSelectedDate] = useState<string>(() =>
+    getTodayLocalDate()
+  );
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const fetchDiaries = useCallback(async () => {
+  const fetchDiaries = useCallback(async (query?: string) => {
     try {
-      const response = await fetch("/api/diaries", {
+      const q = query?.trim() ?? "";
+      const url = q
+        ? `/api/diaries?q=${encodeURIComponent(q)}`
+        : "/api/diaries";
+
+      const response = await fetch(url, {
         cache: "no-store",
       });
       if (!response.ok) {
@@ -29,10 +38,34 @@ export default function Home() {
     fetchDiaries();
   }, [fetchDiaries]);
 
+  // キーワード入力に応じたリアルタイム絞り込み（本文または日付に部分一致）
+  const filteredDiaries = useMemo(() => {
+    const keyword = searchQuery.trim().toLowerCase();
+    if (!keyword) return diaries;
+    return diaries.filter(
+      (diary) =>
+        diary.content.toLowerCase().includes(keyword) ||
+        diary.date.toLowerCase().includes(keyword)
+    );
+  }, [diaries, searchQuery]);
+
   return (
     <main className="flex h-screen w-full overflow-hidden bg-zinc-900 text-zinc-200">
-      <DiaryList diaries={diaries} isLoading={isLoading} />
-      <DiaryEditor onSaved={fetchDiaries} />
+      <DiaryList
+        diaries={filteredDiaries}
+        isLoading={isLoading}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        onSearchSubmit={() => fetchDiaries(searchQuery)}
+      />
+      <DiaryEditor
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        onSaved={() => fetchDiaries()}
+        onDeleted={() => fetchDiaries()}
+      />
     </main>
   );
 }
