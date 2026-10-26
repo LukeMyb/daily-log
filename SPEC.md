@@ -7,7 +7,8 @@
 ## 1. 技術スタック・環境
 
 - **フレームワーク**: Next.js (App Router) + TypeScript
-- **スタイリング**: Tailwind CSS（装飾を抑えた清潔で見やすいモノトーン・シンプル調）
+- **スタイリング**: Tailwind CSS
+  - ダークテーマ基調（背景: `bg-zinc-900` / `bg-[#1E1E1E]`、入力欄・ボタン: `bg-[#27272a]`、ホバー: `hover:bg-zinc-700` / `hover:bg-zinc-800`、境界線: `border-zinc-800` / `border-white/5`、フォーカスリング: `focus:ring-2 focus:ring-blue-600`）
 - **ORM / データベース**: Prisma v6 + SQLite（設定および初回マイグレーション完了済み）
 
 ---

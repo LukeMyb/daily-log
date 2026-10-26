@@ -30,7 +30,7 @@ export default function Home() {
   }, [fetchDiaries]);
 
   return (
-    <main className="flex h-screen w-full overflow-hidden bg-white text-zinc-900">
+    <main className="flex h-screen w-full overflow-hidden bg-zinc-900 text-zinc-200">
       <DiaryList diaries={diaries} isLoading={isLoading} />
       <DiaryEditor onSaved={fetchDiaries} />
     </main>
