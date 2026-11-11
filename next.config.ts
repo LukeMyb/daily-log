@@ -10,16 +10,6 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: "/favicon.ico",
-          destination: "/icon",
-        },
-      ],
-    };
-  },
   async headers() {
     return [
       {

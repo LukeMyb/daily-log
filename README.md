@@ -73,15 +73,17 @@ npm run build
 npm run start
 ```
 
-### 4. Windows バックグラウンド起動（VBScript）
+### 4. Windows タスクトレイ常駐起動（`tray_app.py` / VBScript）
 
-事前に `npm run build` を実行した上で、プロジェクトルートの **`start_daily-log.vbs`** をダブルクリックすると、コマンドプロンプト画面を表示せずにバックグラウンドで本番サーバー（ポート `3647`）が起動します。
+事前に `npm run build` を実行した上で、プロジェクトルートの **`start_daily-log.vbs`** をダブルクリックすると、コマンドプロンプト画面を表示せずにタスクトレイ常駐ランチャー（`tray_app.py`）経由で本番サーバー（ポート `3647`）が起動します。
 
+- **トレイメニュー操作**:
+  - 左クリック / 「🌐 ブラウザで開く」: ブラウザでアプリを開く
+  - 「📁 プロジェクトフォルダをVS Codeで開く」: VS Codeでプロジェクトを開く
+  - 「⏸ 常駐を停止 / ▶ 常駐を再開」: 他のNode.jsプロセスを巻き込まずにポート `3647` のサーバーのみを停止・再開
+  - 「🔄 常駐サーバーを再起動」: ビルド後の反映時などにサーバーを再起動
+  - 「❌ トレイから完全終了」: サーバーを停止してトレイアイコンも終了
 - **PC起動時の自動起動**: `Win + R` → `shell:startup` で開くスタートアップフォルダに `start_daily-log.vbs` のショートカットを配置します。
-- **停止方法**: タスクマネージャーから `node.exe` を終了するか、以下を実行します。
-  ```powershell
-  taskkill /F /IM node.exe
-  ```
 
 ---
 
@@ -98,8 +100,12 @@ npm run start
 ```text
 .
 ├── README.md                             # 本ドキュメント
-├── start_daily-log.vbs                   # Windows バックグラウンド起動用スクリプト
+├── tray_app.py                           # Windows タスクトレイ常駐ランチャー＆アイコン生成
+├── requirements.txt                      # Python 仮想環境用依存パッケージ定義
+├── start_daily-log.vbs                   # Windows スタートアップ・トレイ起動用スクリプト
 ├── public/
+│   ├── icon.png                          # PWA用 アプリアイコン (512x512)
+│   ├── icon-192.png                      # PWA用 アプリアイコン (192x192)
 │   └── sw.js                             # PWA用 Service Worker
 ├── prisma/
 │   └── schema.prisma                     # Prisma スキーマ定義 (Diaryモデル)
@@ -116,8 +122,9 @@ npm run start
         │       └── [date]/
         │           └── route.ts          # 特定日の取得(GET) / 削除(DELETE)
         ├── manifest.ts                   # PWA Web App Manifest
-        ├── icon.tsx                      # アプリアイコン生成 (512x512)
-        ├── apple-icon.tsx                # iOS ホーム画面用アイコン生成 (180x180)
+        ├── favicon.ico                   # ブラウザタブ用 멀티サイズ Favicon
+        ├── icon.png                      # アプリアイコン (512x512)
+        ├── apple-icon.png                # iOS ホーム画面用アイコン (180x180)
         ├── page.tsx                      # メイン画面（2ペイン / 1ペイン切替制御）
         ├── layout.tsx                    # ルートレイアウト・メタデータ設定
         └── globals.css                   # グローバルスタイル

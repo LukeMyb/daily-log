@@ -17,11 +17,12 @@ export const metadata: Metadata = {
   description: "自分専用のシンプルな日記Webアプリ",
   icons: {
     icon: [
-      { url: "/icon?v=2", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: ["/icon?v=2"],
+    shortcut: ["/favicon.ico"],
     apple: [
-      { url: "/apple-icon?v=2", type: "image/png", sizes: "180x180" },
+      { url: "/apple-icon.png", type: "image/png", sizes: "180x180" },
     ],
   },
   appleWebApp: {

@@ -45,3 +45,7 @@ next-env.d.ts
 # SQLite database
 *.db
 *.db-journal
+
+# Python virtual environment
+/.venv/
+/__pycache__/
